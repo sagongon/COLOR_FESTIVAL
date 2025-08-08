@@ -3,7 +3,8 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
+  /* Force light scheme to avoid iOS dark-mode inverted text on white inputs */
+  color-scheme: light;
   color: #1f2937;
   background-color: #f7fafc;
 
@@ -82,9 +83,28 @@ input, select {
   background: #ffffff;
   font-size: 1rem;
   box-sizing: border-box;
+  color: #111827; /* ensure visible text on iOS */
 }
 input[readonly] {
   background: #f3f4f6;
+}
+
+/* Placeholder visibility */
+::placeholder {
+  color: #9ca3af;
+  opacity: 1;
+}
+::-webkit-input-placeholder { color: #9ca3af; }
+::-moz-placeholder { color: #9ca3af; }
+:-ms-input-placeholder { color: #9ca3af; }
+:-moz-placeholder { color: #9ca3af; }
+
+/* Show grey text for selects when no value chosen */
+select:required:invalid {
+  color: #9ca3af;
+}
+option[value=""] {
+  color: #9ca3af;
 }
 
 /* Tables */

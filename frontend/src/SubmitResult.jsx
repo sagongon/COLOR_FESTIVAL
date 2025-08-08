@@ -64,6 +64,7 @@ export default function SubmitResult() {
         />
       </div>
 
+      <label>מספר מסלול</label>
       <input
         type="number"
         placeholder="מספר מסלול (1-40)"
@@ -74,13 +75,14 @@ export default function SubmitResult() {
         max={40}
         style={{ width: '100%', marginBottom: 8 }}
       />
+      <label>תוצאה</label>
       <select
         value={result}
         onChange={e => setResult(e.target.value)}
         required
         style={{ width: '100%', marginBottom: 8 }}
       >
-        <option value="">בחר תוצאה</option>
+        <option value="" disabled={result!==''}>בחר תוצאה</option>
         <option value="Z1">Z1</option>
         <option value="Z2">Z2</option>
         <option value="TOP">TOP</option>

@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAutoVerticalScroll } from './hooks/useAutoVerticalScroll';
 
 export default function LiveTeams() {
   const [rows, setRows] = useState([]);
@@ -23,31 +24,34 @@ export default function LiveTeams() {
     return () => clearInterval(t);
   }, []);
 
+  const wrapRef = useRef(null);
+  useAutoVerticalScroll(wrapRef, { speed: 25, pauseMs: 1500 });
+
   return (
-    <div style={{ direction: 'rtl', textAlign: 'right' }}>
+    <div className="container" style={{ direction: 'rtl', textAlign: 'right' }}>
       <h2 style={{ marginTop: 0 }}>תוצאות לייב - שלשות</h2>
       {error && <div style={{ color: 'crimson', marginBottom: 8 }}>{error}</div>}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="table-wrap" ref={wrapRef} style={{ maxHeight: '70vh' }}>
+        <table>
           <thead>
             <tr>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>#</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>קפטן</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>סה"כ גיל</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>קטגוריה</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>מסלולי בונוס (כולם TOP)</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>ניקוד קבוצה</th>
+              <th>#</th>
+              <th>קפטן</th>
+              <th>סה"כ גיל</th>
+              <th>קטגוריה</th>
+              <th>מסלולי בונוס (כולם TOP)</th>
+              <th>ניקוד קבוצה</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((t, idx) => (
               <tr key={t.captainName}>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{idx + 1}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.captainName}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{Number.isFinite(Number(t.totalAge)) ? Number(t.totalAge).toFixed(1) : t.totalAge}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.isOver100 ? '100+' : 'כללי'}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{(t.bonusRoutes || []).join(', ') || '-'}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.teamTotal}</td>
+                <td>{idx + 1}</td>
+                <td>{t.captainName}</td>
+                <td>{Number.isFinite(Number(t.totalAge)) ? Number(t.totalAge).toFixed(1) : t.totalAge}</td>
+                <td>{t.isOver100 ? '100+' : 'כללי'}</td>
+                <td>{(t.bonusRoutes || []).join(', ') || '-'}</td>
+                <td>{t.teamTotal}</td>
               </tr>
             ))}
           </tbody>

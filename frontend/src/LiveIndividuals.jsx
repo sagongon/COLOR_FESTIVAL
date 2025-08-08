@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useAutoVerticalScroll } from './hooks/useAutoVerticalScroll';
 
 export default function LiveIndividuals() {
   const [rows, setRows] = useState([]);
@@ -23,25 +24,28 @@ export default function LiveIndividuals() {
     return () => clearInterval(t);
   }, []);
 
+  const wrapRef = useRef(null);
+  useAutoVerticalScroll(wrapRef, { speed: 25, pauseMs: 1500 });
+
   return (
-    <div style={{ direction: 'rtl', textAlign: 'right' }}>
+    <div className="container" style={{ direction: 'rtl', textAlign: 'right' }}>
       <h2 style={{ marginTop: 0 }}>תוצאות לייב - יחידים</h2>
       {error && <div style={{ color: 'crimson', marginBottom: 8 }}>{error}</div>}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <div className="table-wrap" ref={wrapRef} style={{ maxHeight: '70vh' }}>
+        <table>
           <thead>
             <tr>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>#</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>שם</th>
-              <th style={{ textAlign: 'right', borderBottom: '1px solid #ddd' }}>ניקוד</th>
+              <th>#</th>
+              <th>שם</th>
+              <th>ניקוד</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r, idx) => (
               <tr key={r.id + r.name}>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{idx + 1}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{r.name || r.id}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{r.total}</td>
+                <td>{idx + 1}</td>
+                <td>{r.name || r.id}</td>
+                <td>{r.total}</td>
               </tr>
             ))}
           </tbody>

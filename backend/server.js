@@ -424,6 +424,113 @@ app.get('/resolve-id/:id', async (req, res) => {
 
 // --- כאן יתווספו ה-API ---
 
+// מחשב ניקוד ותוצאות לשורה בודדת לפי כותרות
+function computeRowResults(header, row) {
+  const results = [];
+  let total = 0;
+  for (let i = 0; i < header.length; i++) {
+    if (/מסלול\s*\d+/.test(header[i] || '')) {
+      const routeNum = parseInt((header[i] || '').toString().replace(/[^\d]/g, ''));
+      const val = (row[i] || '').toString().trim().toUpperCase();
+      const score = getScoreFor(val);
+      if (!Number.isNaN(routeNum)) {
+        results.push({ route: routeNum, result: val, score });
+        if (score > 0) total += score;
+      }
+    }
+  }
+  return { results, total };
+}
+
+// GET /live/individuals – טבלת לייב לכל הספורטאים (שם + ניקוד כולל)
+app.get('/live/individuals', async (req, res) => {
+  try {
+    await ensureScoreMapFresh();
+    const r = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_MAIN,
+      range: 'פסטיבל הצבעים!A:ZZZ',
+    });
+    const rows = r.data.values || [];
+    if (rows.length === 0) return res.json([]);
+    const header = rows[0];
+    const nameIdx = header.findIndex(h => (h || '').toString().includes('שם מלא'));
+    const idIdx = header.findIndex(h => /(ת"ז|ת\.ז|תז)/.test(h || ''));
+    const data = rows.slice(1).map((row) => {
+      const { total } = computeRowResults(header, row);
+      return {
+        name: nameIdx !== -1 ? (row[nameIdx] || '') : '',
+        id: idIdx !== -1 ? (row[idIdx] || '') : '',
+        total,
+      };
+    }).filter(p => p.name || p.id);
+    data.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    res.json(data);
+  } catch (err) {
+    console.error('❌ שגיאה ב-/live/individuals:', err.message);
+    res.status(500).json({ error: 'שגיאה בשרת' });
+  }
+});
+
+// GET /live/teams – טבלת לייב שלשות לפי קפטן
+app.get('/live/teams', async (req, res) => {
+  try {
+    await ensureScoreMapFresh();
+    const r = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID_MAIN,
+      range: 'פסטיבל הצבעים!A:ZZZ',
+    });
+    const rows = r.data.values || [];
+    if (rows.length === 0) return res.json([]);
+    const header = rows[0];
+    const captainIdx = header.findIndex(h => (h || '').toString().includes('שם הקפטן'));
+    const nameIdx = header.findIndex(h => (h || '').toString().includes('שם מלא'));
+    const ageIdx = header.findIndex(h => (h || '').toString().includes('גיל'));
+    if (captainIdx === -1) return res.json([]);
+
+    // קבץ לפי קפטן
+    const byCaptain = new Map();
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      const captain = row[captainIdx];
+      if (!captain) continue;
+      if (!byCaptain.has(captain)) byCaptain.set(captain, []);
+      byCaptain.get(captain).push(row);
+    }
+
+    // חשב לכל קבוצה
+    const teams = [];
+    for (const [captainName, membersRows] of byCaptain.entries()) {
+      const members = membersRows.map(row => {
+        const { results, total } = computeRowResults(header, row);
+        return {
+          name: nameIdx !== -1 ? (row[nameIdx] || '') : '',
+          age: ageIdx !== -1 ? (parseFloat(row[ageIdx]) || 0) : 0,
+          results,
+          total,
+        };
+      });
+      const totalAge = members.reduce((s, m) => s + (m.age || 0), 0);
+      const isOver100 = totalAge > 100;
+      // מסלולי בונוס – כולם T
+      const allRouteNums = new Set();
+      for (const m of members) for (const r of m.results) allRouteNums.add(r.route);
+      const bonusRoutes = [];
+      for (const routeNum of Array.from(allRouteNums).sort((a,b)=>a-b)) {
+        const allTop = members.length > 0 && members.every(m => (m.results.find(r => r.route === routeNum)?.result === 'T'));
+        if (allTop) bonusRoutes.push(routeNum);
+      }
+      const memberTotals = members.map(m => ({ name: m.name, total: m.total }));
+      const teamTotal = memberTotals.reduce((s, m) => s + m.total, 0) + bonusRoutes.length * (scoreCache.teamBonus ?? 10);
+      teams.push({ captainName, members: memberTotals, totalAge, isOver100, bonusRoutes, teamTotal });
+    }
+    teams.sort((a, b) => b.teamTotal - a.teamTotal || a.captainName.localeCompare(b.captainName));
+    res.json(teams);
+  } catch (err) {
+    console.error('❌ שגיאה ב-/live/teams:', err.message);
+    res.status(500).json({ error: 'שגיאה בשרת' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('🟢 Climbing Competition API is running');
 });

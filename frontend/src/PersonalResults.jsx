@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function PersonalResults() {
   const [idNumber, setIdNumber] = useState('');
+  const [athleteName, setAthleteName] = useState('');
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
 
@@ -17,19 +18,47 @@ export default function PersonalResults() {
     else setError(data.error || 'שגיאה');
   };
 
+  // Resolve athlete name when ID is typed
+  useEffect(() => {
+    const controller = new AbortController();
+    const run = async () => {
+      const id = idNumber.trim();
+      setAthleteName('');
+      if (!id) return;
+      try {
+        const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
+        const res = await fetch(`${base}/resolve-id/${encodeURIComponent(id)}`, { signal: controller.signal });
+        if (!res.ok) return;
+        const data = await res.json();
+        setAthleteName(data.name || '');
+      } catch {}
+    };
+    run();
+    return () => controller.abort();
+  }, [idNumber]);
+
   return (
     <div>
       <h2>תוצאות אישיות</h2>
       <form onSubmit={fetchResults}>
-        <input
-          type="text"
-          inputMode="numeric"
-          placeholder="ת.ז (9 ספרות)"
-          value={idNumber}
-          onChange={e => setIdNumber(e.target.value)}
-          required
-          style={{ width: '100%', marginBottom: 8 }}
-        />
+        <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="ת.ז (9 ספרות)"
+            value={idNumber}
+            onChange={e => setIdNumber(e.target.value)}
+            required
+            style={{ flex: 1 }}
+          />
+          <input
+            type="text"
+            placeholder="שם הספורטאי"
+            value={athleteName}
+            readOnly
+            style={{ flex: 1, background: '#f6f6f6' }}
+          />
+        </div>
         <button type="submit">הצג</button>
       </form>
       {error && <div style={{ color: 'red' }}>{error}</div>}

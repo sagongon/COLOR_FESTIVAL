@@ -1,10 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import SubmitResult from './SubmitResult';
 import PersonalResults from './PersonalResults';
 import TeamResults from './TeamResults';
 
 export default function App() {
+  useEffect(() => {
+    document.title = 'COLOR FESTIVAL';
+  }, []);
   return (
     <BrowserRouter>
       <div style={{ direction: 'rtl', textAlign: 'right', padding: 20 }}>

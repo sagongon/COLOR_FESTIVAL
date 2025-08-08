@@ -22,14 +22,26 @@ app.use(express.json());
 
 // --- Google Sheets connection setup ---
 const GOOGLE_SA_PATH = process.env.GOOGLE_SA_PATH;
+const GOOGLE_SA_JSON = process.env.GOOGLE_SA_JSON; // אופציה חלופית: התוכן המלא של ה-JSON במשתנה סביבה
 const SPREADSHEET_ID_MAIN = process.env.SPREADSHEET_ID_MAIN;
 
-if (!GOOGLE_SA_PATH || !SPREADSHEET_ID_MAIN) {
-  console.error('❌ Missing Google Sheets configuration in .env');
+if ((!GOOGLE_SA_PATH && !GOOGLE_SA_JSON) || !SPREADSHEET_ID_MAIN) {
+  console.error('❌ Missing Google Sheets configuration in .env (need GOOGLE_SA_PATH or GOOGLE_SA_JSON, and SPREADSHEET_ID_MAIN)');
   process.exit(1);
 }
 
-const credentials = JSON.parse(fs.readFileSync(GOOGLE_SA_PATH));
+let credentialsRaw;
+try {
+  if (GOOGLE_SA_JSON) {
+    credentialsRaw = GOOGLE_SA_JSON;
+  } else {
+    credentialsRaw = fs.readFileSync(GOOGLE_SA_PATH, 'utf8');
+  }
+} catch (e) {
+  console.error('❌ Failed to load Google Service Account credentials:', e.message);
+  process.exit(1);
+}
+const credentials = JSON.parse(credentialsRaw);
 const SCOPES = ['https://www.googleapis.com/auth/spreadsheets'];
 const auth = new google.auth.GoogleAuth({ credentials, scopes: SCOPES });
 const sheets = google.sheets({ version: 'v4', auth });

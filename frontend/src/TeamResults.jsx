@@ -9,7 +9,8 @@ export default function TeamResults() {
     e.preventDefault();
     setError('');
     setResults(null);
-    const res = await fetch(`http://localhost:4000/team-results/${encodeURIComponent(captain)}`);
+    const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
+    const res = await fetch(`${base}/team-results/${encodeURIComponent(captain)}`);
     const data = await res.json();
     if (res.ok) setResults(data);
     else setError(data.error || 'שגיאה');

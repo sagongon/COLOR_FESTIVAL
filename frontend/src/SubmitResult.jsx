@@ -12,10 +12,11 @@ export default function SubmitResult() {
     const run = async () => {
       const id = idNumber.trim();
       setAthleteName('');
-      // בצע Resolve רק כשהת.ז באורך 8 ספרות ומעלה (יש ת"ז עם 8)
-      if (!id || id.length < 8) return;
+      // בצע Resolve כאשר יש תוכן כלשהו (מניעת 404ים תיעשה בצד השרת אם לא נמצא)
+      if (!id) return;
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:4000'}/resolve-id/${encodeURIComponent(id)}`, { signal: controller.signal });
+        const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
+        const res = await fetch(`${base}/resolve-id/${encodeURIComponent(id)}`, { signal: controller.signal });
         if (!res.ok) return;
         const data = await res.json();
         setAthleteName(data.name || '');
@@ -29,7 +30,8 @@ export default function SubmitResult() {
     e.preventDefault();
     setMessage('');
     const resultToSend = result === 'TOP' ? 'T' : result;
-    const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:4000'}/submit-result`, {
+    const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
+    const res = await fetch(`${base}/submit-result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier: idNumber.trim(), route: Number(route), result: resultToSend })

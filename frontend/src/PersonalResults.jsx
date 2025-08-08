@@ -9,7 +9,8 @@ export default function PersonalResults() {
     e.preventDefault();
     setError('');
     setResults(null);
-    const res = await fetch(`http://localhost:4000/personal-results/${identifier}`);
+    const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
+    const res = await fetch(`${base}/personal-results/${encodeURIComponent(identifier)}`);
     const data = await res.json();
     if (res.ok) setResults(data);
     else setError(data.error || 'שגיאה');

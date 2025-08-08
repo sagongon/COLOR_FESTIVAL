@@ -44,7 +44,7 @@ export default function LiveTeams() {
               <tr key={t.captainName}>
                 <td style={{ borderBottom: '1px solid #f0f0f0' }}>{idx + 1}</td>
                 <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.captainName}</td>
-                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.totalAge}</td>
+                <td style={{ borderBottom: '1px solid #f0f0f0' }}>{Number.isFinite(Number(t.totalAge)) ? Number(t.totalAge).toFixed(1) : t.totalAge}</td>
                 <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.isOver100 ? '100+' : 'כללי'}</td>
                 <td style={{ borderBottom: '1px solid #f0f0f0' }}>{(t.bonusRoutes || []).join(', ') || '-'}</td>
                 <td style={{ borderBottom: '1px solid #f0f0f0' }}>{t.teamTotal}</td>

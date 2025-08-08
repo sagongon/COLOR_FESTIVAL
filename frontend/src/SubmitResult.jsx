@@ -82,7 +82,7 @@ export default function SubmitResult() {
         required
         style={{ width: '100%', marginBottom: 8 }}
       >
-        <option value="" disabled={result!==''}>בחר תוצאה</option>
+        <option value="" disabled>בחר תוצאה</option>
         <option value="Z1">Z1</option>
         <option value="Z2">Z2</option>
         <option value="TOP">TOP</option>

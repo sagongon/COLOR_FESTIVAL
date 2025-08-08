@@ -51,10 +51,13 @@ function getNow() {
   return new Date().toISOString();
 }
 
-// Normalize Israeli ID: keep digits only and drop leading zeros
-function normalizeId(value) {
-  const digits = (value ?? '').toString().replace(/\D/g, '');
-  return digits.replace(/^0+/, '');
+// Helpers for ID comparison
+function digitsOnly(value) {
+  return (value ?? '').toString().replace(/\D/g, '');
+}
+function padIdTo9(value) {
+  const d = digitsOnly(value);
+  return d.padStart(9, '0');
 }
 
 // Utility: get row index by identifier (UID, ID, or full name)
@@ -71,9 +74,10 @@ async function findRowIndex(identifier) {
   
   // Find header columns
   const header = rows[0] || [];
-  const nameIdx = header.findIndex(h => h.includes('שם מלא'));
-  const idIdx = header.findIndex(h => h.includes('ת"ז'));
-  const uidIdx = header.findIndex(h => h.toLowerCase().includes('uid'));
+  // התאמות רחבות יותר לכותרות
+  const nameIdx = header.findIndex(h => /שם\s*מלא/i.test(h));
+  const idIdx = header.findIndex(h => /(ת"ז|ת.ז|תז)/.test(h));
+  const uidIdx = header.findIndex(h => (h || '').toString().toLowerCase().includes('uid'));
   
   console.log('📋 אינדקסים - שם:', nameIdx, 'ת"ז:', idIdx, 'UID:', uidIdx);
   
@@ -81,8 +85,8 @@ async function findRowIndex(identifier) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const uidMatch = uidIdx !== -1 && row[uidIdx] && row[uidIdx].replace(/[:\s]/g, '') === identifier.replace(/[:\s]/g, '');
-    const idMatch = idIdx !== -1 && row[idIdx] && normalizeId(row[idIdx]) === normalizeId(identifier);
-    const nameMatch = nameIdx !== -1 && row[nameIdx] && row[nameIdx] === identifier;
+    const idMatch = idIdx !== -1 && row[idIdx] && padIdTo9(row[idIdx]) === padIdTo9(identifier);
+    const nameMatch = nameIdx !== -1 && row[nameIdx] && (row[nameIdx] === identifier || row[nameIdx].toString().trim() === identifier.toString().trim());
     
     if (uidMatch || idMatch || nameMatch) {
       console.log('✅ נמצאה התאמה בשורה', i + 1, 'עם ערכים:', { uidMatch, idMatch, nameMatch });

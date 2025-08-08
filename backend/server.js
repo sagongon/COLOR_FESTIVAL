@@ -255,15 +255,13 @@ app.post('/submit-result', async (req, res) => {
     const cellRef = `${colLetter}${rowIndex}`;
     const prevVal = row[colIdx] || '';
     await ensureScoreMapFresh();
-    // 3. Update only if result is higher
-    if (isUpgrade(result, prevVal)) {
-      await sheets.spreadsheets.values.update({
-        spreadsheetId: SPREADSHEET_ID_MAIN,
-        range: `פסטיבל הצבעים!${cellRef}`,
-        valueInputOption: 'USER_ENTERED',
-        resource: { values: [[result]] },
-      });
-    }
+    // 3. Always update cell with the new result (last input wins)
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID_MAIN,
+      range: `פסטיבל הצבעים!${cellRef}`,
+      valueInputOption: 'USER_ENTERED',
+      resource: { values: [[result]] },
+    });
     // 4. Always log to LOG sheet
     const now = new Date().toLocaleString('he-IL');
     await ensureLogSheet();
@@ -282,7 +280,7 @@ app.post('/submit-result', async (req, res) => {
         ]],
       },
     });
-    res.json({ message: 'OK', updated: isUpgrade(result, prevVal) });
+    res.json({ message: 'OK', updated: true });
   } catch (err) {
     console.error('❌ שגיאה ב-/submit-result:', err.message);
     res.status(500).json({ error: 'שגיאה בשרת' });

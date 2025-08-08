@@ -6,15 +6,26 @@ import { google } from 'googleapis';
 import fs from 'fs';
 
 const app = express();
-// CORS: אפשר לצמצם לפי משתנה סביבה ALLOWED_ORIGINS (מופרד בפסיקים), אחרת פתוח לכולם
+// CORS: אם ALLOWED_ORIGINS מוגדר – נאפשר רק אליו; אחרת פתוח לכולם. כולל תמיכה ב-OPTIONS (preflight)
 const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map(s => s.trim())
   .filter(Boolean);
+
 if (allowedOrigins.length > 0) {
-  app.use(cors({ origin: allowedOrigins }));
+  const corsOptions = {
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true); // direct calls / health checks
+      const ok = allowedOrigins.includes(origin);
+      callback(null, ok);
+    },
+    credentials: false,
+  };
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
 } else {
   app.use(cors());
+  app.options('*', cors());
 }
 const PORT = process.env.PORT || 4000;
 
@@ -95,6 +106,26 @@ async function findRowIndex(identifier) {
   }
   
   console.log('❌ לא נמצאה התאמה עבור:', identifier);
+  return null;
+}
+
+// Utility: get row index by ID only
+async function findRowIndexById(idRaw) {
+  const id = padIdTo9(idRaw);
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID_MAIN,
+    range: 'פסטיבל הצבעים!A:ZZZ',
+  });
+  const rows = res.data.values || [];
+  const header = rows[0] || [];
+  const idIdx = header.findIndex(h => /(ת"ז|ת.ז|תז)/.test(h));
+  if (idIdx === -1) return null;
+  for (let i = 1; i < rows.length; i++) {
+    const row = rows[i];
+    if (row[idIdx] && padIdTo9(row[idIdx]) === id) {
+      return { rowIndex: i + 1, row, header };
+    }
+  }
   return null;
 }
 
@@ -258,13 +289,12 @@ app.post('/submit-result', async (req, res) => {
   }
 });
 
-// GET /personal-results/:identifier
+// GET /personal-results/:identifier (ID only)
 app.get('/personal-results/:identifier', async (req, res) => {
   try {
     const { identifier } = req.params;
-    console.log('🔍 מחפש משתמש:', identifier);
-    
-    const found = await findRowIndex(identifier);
+    console.log('🔍 מחפש משתמש לפי ת.ז:', identifier);
+    const found = await findRowIndexById(identifier);
     if (!found) {
       console.log('❌ משתמש לא נמצא:', identifier);
       return res.status(404).json({ error: 'משתמש לא נמצא' });
@@ -377,12 +407,12 @@ app.get('/team-results/:captainName', async (req, res) => {
   }
 });
 
-// מזהה שם לפי מספר ת"ז
+// מזהה שם לפי מספר ת"ז (ID only)
 app.get('/resolve-id/:id', async (req, res) => {
   try {
     const id = (req.params.id || '').trim();
     if (!id) return res.status(400).json({ error: 'חסר ת"ז' });
-    const found = await findRowIndex(id);
+    const found = await findRowIndexById(id);
     if (!found) return res.status(404).json({ error: 'לא נמצא' });
     const { row, header } = found;
     const nameIdx = header.findIndex(h => h.includes('שם מלא'));

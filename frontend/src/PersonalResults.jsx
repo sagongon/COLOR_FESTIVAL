@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
 export default function PersonalResults() {
-  const [identifier, setIdentifier] = useState('');
+  const [idNumber, setIdNumber] = useState('');
   const [results, setResults] = useState(null);
   const [error, setError] = useState('');
 
@@ -10,7 +10,8 @@ export default function PersonalResults() {
     setError('');
     setResults(null);
     const base = import.meta.env.VITE_API_BASE || 'https://color-festival.onrender.com';
-    const res = await fetch(`${base}/personal-results/${encodeURIComponent(identifier)}`);
+    const id = idNumber.replace(/\D/g, '').padStart(9, '0');
+    const res = await fetch(`${base}/personal-results/${encodeURIComponent(id)}`);
     const data = await res.json();
     if (res.ok) setResults(data);
     else setError(data.error || 'שגיאה');
@@ -22,9 +23,10 @@ export default function PersonalResults() {
       <form onSubmit={fetchResults}>
         <input
           type="text"
-          placeholder="ת.ז / UID / שם מלא"
-          value={identifier}
-          onChange={e => setIdentifier(e.target.value)}
+          inputMode="numeric"
+          placeholder="ת.ז (9 ספרות)"
+          value={idNumber}
+          onChange={e => setIdNumber(e.target.value)}
           required
           style={{ width: '100%', marginBottom: 8 }}
         />

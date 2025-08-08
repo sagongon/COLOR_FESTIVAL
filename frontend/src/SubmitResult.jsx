@@ -12,8 +12,8 @@ export default function SubmitResult() {
     const run = async () => {
       const id = idNumber.trim();
       setAthleteName('');
-      // בצע Resolve רק כשהת.ז באורך 9 ספרות כדי למנוע 404ים בזמן הקלדה
-      if (!id || id.length < 9) return;
+      // בצע Resolve רק כשהת.ז באורך 8 ספרות ומעלה (יש ת"ז עם 8)
+      if (!id || id.length < 8) return;
       try {
         const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:4000'}/resolve-id/${encodeURIComponent(id)}`, { signal: controller.signal });
         if (!res.ok) return;
@@ -32,7 +32,7 @@ export default function SubmitResult() {
     const res = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:4000'}/submit-result`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier: idNumber, route, result: resultToSend })
+      body: JSON.stringify({ identifier: idNumber.trim(), route: Number(route), result: resultToSend })
     });
     const data = await res.json();
     if (res.ok) {

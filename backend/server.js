@@ -51,6 +51,12 @@ function getNow() {
   return new Date().toISOString();
 }
 
+// Normalize Israeli ID: keep digits only and drop leading zeros
+function normalizeId(value) {
+  const digits = (value ?? '').toString().replace(/\D/g, '');
+  return digits.replace(/^0+/, '');
+}
+
 // Utility: get row index by identifier (UID, ID, or full name)
 async function findRowIndex(identifier) {
   console.log('🔍 findRowIndex - מחפש:', identifier);
@@ -75,7 +81,7 @@ async function findRowIndex(identifier) {
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const uidMatch = uidIdx !== -1 && row[uidIdx] && row[uidIdx].replace(/[:\s]/g, '') === identifier.replace(/[:\s]/g, '');
-    const idMatch = idIdx !== -1 && row[idIdx] && row[idIdx] === identifier;
+    const idMatch = idIdx !== -1 && row[idIdx] && normalizeId(row[idIdx]) === normalizeId(identifier);
     const nameMatch = nameIdx !== -1 && row[nameIdx] && row[nameIdx] === identifier;
     
     if (uidMatch || idMatch || nameMatch) {

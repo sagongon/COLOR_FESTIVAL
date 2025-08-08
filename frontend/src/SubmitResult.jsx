@@ -43,9 +43,9 @@ export default function SubmitResult() {
   };
 
   return (
-    <form onSubmit={handleSubmit} style={{ direction: 'rtl', maxWidth: 420, margin: 'auto' }}>
-      <h2>הזנת תוצאה</h2>
-      <label style={{ display: 'block', marginBottom: 4 }}>ת.ז</label>
+    <form onSubmit={handleSubmit} className="container">
+      <h2 style={{ marginTop: 0, marginBottom: 12 }}>הזנת תוצאה</h2>
+      <label>ת.ז</label>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
         <input
           type="text"
